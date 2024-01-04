@@ -27,7 +27,23 @@ async function run() {
         const categoriesCollection = database.collection('categories');
 
         app.get('/categories', async (req, res) => {
-            const categories = await categoriesCollection.find({}).toArray();
+            const sortBy = req.query.sortBy;
+
+            let categories;
+
+            if (sortBy === 'name') {
+                categories = await categoriesCollection.find({}).sort({ name: 1 }).toArray();
+            }
+
+            if (sortBy === 'type') {
+                categories = await categoriesCollection.find({}).sort({ type: 1 }).toArray();
+            }
+
+            if (sortBy === 'region') {
+                categories = await categoriesCollection.find({}).sort({ region: 1 }).toArray();
+            }
+
+            console.log(categories)
             res.send(categories)
         })
 
