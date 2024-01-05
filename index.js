@@ -30,6 +30,7 @@ async function run() {
             const sortBy = req.query.sortBy;
             const area = req.query.area;
             const type = req.query.type;
+            const search = req.query.search;
 
             const cursor = categoriesCollection.find({});
             let categories;
@@ -49,6 +50,13 @@ async function run() {
 
             if (!sortBy) {
                 categories = await cursor.toArray();
+            }
+
+            // search the categories
+            if (search) {
+                categories = categories.filter(category => category.name.toLowerCase().includes(search.toLowerCase()))
+
+                return res.send(categories)
             }
 
             // filter the categories according to area
