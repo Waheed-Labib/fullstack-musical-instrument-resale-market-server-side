@@ -28,28 +28,49 @@ async function run() {
 
         app.get('/categories', async (req, res) => {
             const sortBy = req.query.sortBy;
+            const area = req.query.area;
+            const type = req.query.type;
 
+            const cursor = categoriesCollection.find({});
             let categories;
 
+            // sort the categories
             if (sortBy === 'name') {
-                categories = await categoriesCollection.find({}).sort({ name: 1 }).toArray();
+                categories = await cursor.sort({ name: 1 }).toArray();
             }
 
             if (sortBy === 'type') {
-                categories = await categoriesCollection.find({}).sort({ type: 1 }).toArray();
+                categories = await cursor.sort({ type: 1 }).toArray();
             }
 
             if (sortBy === 'region') {
-                categories = await categoriesCollection.find({}).sort({ region: 1 }).toArray();
+                categories = await cursor.sort({ region: 1 }).toArray();
             }
 
-            console.log(categories)
+            if (!sortBy) {
+                categories = await cursor.toArray();
+            }
+
+            // filter the categories according to area
+            if (!area || area === 'all') {
+                categories = categories;
+            }
+
+            else {
+                categories = categories.filter(category => category.region.toLowerCase() === area)
+            }
+
+            // filter the categories according to type
+            if (!type || type === 'all') {
+                categories = categories
+            }
+
+            else {
+                categories = categories.filter(category => category.type.toLowerCase() === type)
+            }
+
             res.send(categories)
         })
-
-
-
-
 
     } finally {
 
