@@ -28,7 +28,7 @@ async function run() {
 
         app.get('/categories', async (req, res) => {
             const sortBy = req.query.sortBy;
-            const area = req.query.area;
+            const region = req.query.region;
             const type = req.query.type;
             const search = req.query.search;
 
@@ -60,21 +60,29 @@ async function run() {
             }
 
             // filter the categories according to area
-            if (!area || area === 'all') {
+            if (!region || region.toLowerCase() === 'show all') {
                 categories = categories;
             }
 
-            else {
-                categories = categories.filter(category => category.region.toLowerCase() === area)
+            if (region.toLowerCase() === 'asian instruments') {
+                categories = categories.filter(category => category.region.toLowerCase() === 'asian')
+            }
+
+            if (region.toLowerCase() === 'western instruments') {
+                categories = categories.filter(category => category.region.toLowerCase() === 'western')
+            }
+
+            if (region.toLowerCase() === 'mixed origin') {
+                categories = categories.filter(category => category.region.toLowerCase() === 'mixed origin')
             }
 
             // filter the categories according to type
-            if (!type || type === 'all') {
+            if (!type || type.toLowerCase() === 'show all') {
                 categories = categories
             }
 
             else {
-                categories = categories.filter(category => category.type.toLowerCase() === type)
+                categories = categories.filter(category => category.type.toLowerCase() === type.toLowerCase())
             }
 
             res.send(categories)
