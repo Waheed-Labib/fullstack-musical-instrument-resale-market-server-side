@@ -9,6 +9,7 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 app.use(cors());
 app.use(express.json());
 
+
 // mongoDB config
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.nbmbmyw.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -25,6 +26,7 @@ async function run() {
     try {
         const database = client.db('classica');
         const categoriesCollection = database.collection('categories');
+        const productsCollection = database.collection('products');
 
         app.get('/categories', async (req, res) => {
             const sortBy = req.query.sortBy;
@@ -59,7 +61,7 @@ async function run() {
                 return res.send(categories)
             }
 
-            // filter the categories according to area
+            // filter the categories according to region
             if (!region || region.toLowerCase() === 'show all') {
                 categories = categories;
             }
@@ -86,6 +88,23 @@ async function run() {
             }
 
             res.send(categories)
+        })
+
+        app.get('/products/:categoryName', async (req, res) => {
+            const categoryName = req.params.categoryName;
+            const quantity = parseInt(req.query.quantity);
+            const currentPage = parseInt(req.query.currentPage);
+
+            const totalProductsCount = await productsCollection.estimatedDocumentCount();
+
+            const products = await productsCollection.find({ category: categoryName }).skip(quantity * (currentPage - 1)).limit(quantity).toArray();
+
+            const productsData = {
+                count: totalProductsCount,
+                products: products
+            }
+            console.log(productsData)
+            res.send(productsData);
         })
 
     } finally {
