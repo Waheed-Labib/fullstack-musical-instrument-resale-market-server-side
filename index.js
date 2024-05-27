@@ -27,6 +27,7 @@ async function run() {
         const database = client.db('classica');
         const categoriesCollection = database.collection('categories');
         const productsCollection = database.collection('products');
+        const usersCollection = database.collection('users');
 
         app.get('/categories', async (req, res) => {
             const sortBy = req.query.sortBy;
@@ -66,15 +67,15 @@ async function run() {
                 categories = categories;
             }
 
-            if (region.toLowerCase() === 'asian instruments') {
+            if (region?.toLowerCase() === 'asian instruments') {
                 categories = categories.filter(category => category.region.toLowerCase() === 'asian')
             }
 
-            if (region.toLowerCase() === 'western instruments') {
+            if (region?.toLowerCase() === 'western instruments') {
                 categories = categories.filter(category => category.region.toLowerCase() === 'western')
             }
 
-            if (region.toLowerCase() === 'mixed origin') {
+            if (region?.toLowerCase() === 'mixed origin') {
                 categories = categories.filter(category => category.region.toLowerCase() === 'mixed origin')
             }
 
@@ -103,8 +104,22 @@ async function run() {
                 count: totalProductsCount,
                 products: products
             }
-            console.log(productsData)
+
             res.send(productsData);
+        })
+
+        // get particular user with email
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await usersCollection.findOne({ email: email })
+            res.send(user)
+        })
+
+        // add new user
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
         })
 
     } finally {
