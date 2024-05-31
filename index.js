@@ -118,7 +118,21 @@ async function run() {
         // add new user
         app.post('/users', async (req, res) => {
             const user = req.body;
-            const result = await usersCollection.insertOne(user);
+
+            const alreadyUser = await usersCollection.findOne({ email: user.email })
+
+            let result;
+            if (!alreadyUser) result = await usersCollection.insertOne(user);
+
+            res.send(result);
+        })
+
+        //add a product
+        app.post('/products', async (req, res) => {
+            const product = req.body;
+
+            const result = await productsCollection.insertOne(product);
+
             res.send(result);
         })
 
