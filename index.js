@@ -136,6 +136,13 @@ async function run() {
             res.send(result);
         })
 
+        // show products of a particular seller
+        app.get('/products/seller/:sellerEmail', async (req, res) => {
+            const sellerEmail = req.params.sellerEmail;
+            const result = await productsCollection.find({ sellerEmail: sellerEmail }).toArray();
+            res.send(result);
+        })
+
     } finally {
 
     }
