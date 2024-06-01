@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.port || 5000;
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 app.use(cors());
 app.use(express.json());
@@ -91,14 +91,17 @@ async function run() {
             res.send(categories)
         })
 
+        // get products of a category
         app.get('/products/:categoryName', async (req, res) => {
             const categoryName = req.params.categoryName;
             const quantity = parseInt(req.query.quantity);
             const currentPage = parseInt(req.query.currentPage);
 
-            const totalProductsCount = await productsCollection.estimatedDocumentCount();
+            const totalProductsArray = await productsCollection.find({ category: categoryName }).toArray();
 
-            const products = await productsCollection.find({ category: categoryName }).skip(quantity * (currentPage - 1)).limit(quantity).toArray();
+            const totalProductsCount = totalProductsArray.length;
+
+            const products = await productsCollection.find({ category: categoryName }).sort({ _id: -1 }).skip(quantity * (currentPage - 1)).limit(quantity).toArray();
 
             const productsData = {
                 count: totalProductsCount,
@@ -139,7 +142,14 @@ async function run() {
         // show products of a particular seller
         app.get('/products/seller/:sellerEmail', async (req, res) => {
             const sellerEmail = req.params.sellerEmail;
-            const result = await productsCollection.find({ sellerEmail: sellerEmail }).toArray();
+            const result = ((await productsCollection.find({ sellerEmail: sellerEmail }).toArray()).reverse());
+            res.send(result);
+        })
+
+        // delete a product
+        app.delete('/products/:productId', async (req, res) => {
+            const productId = req.params.productId;
+            const result = await productsCollection.deleteOne({ _id: new ObjectId(productId) })
             res.send(result);
         })
 
