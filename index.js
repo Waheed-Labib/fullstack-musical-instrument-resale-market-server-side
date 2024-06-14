@@ -5,6 +5,7 @@ const app = express();
 const port = process.env.port || 5000;
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -29,6 +30,7 @@ async function run() {
         const productsCollection = database.collection('products');
         const usersCollection = database.collection('users');
         const bookingsCollection = database.collection('bookings')
+        const paymentsCollection = database.collection('payments')
 
         app.get('/categories', async (req, res) => {
             const sortBy = req.query.sortBy;
@@ -268,6 +270,31 @@ async function run() {
             const result = await usersCollection.deleteOne({ email: userEmail })
             res.send(result)
         })
+
+        //payment
+        app.post('/create-payment-intent', async (req, res) => {
+            const bookingInfo = req.body;
+            const price = bookingInfo.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            res.send(result);
+        })
+
 
     } finally {
 
