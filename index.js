@@ -28,6 +28,7 @@ async function run() {
         const categoriesCollection = database.collection('categories');
         const productsCollection = database.collection('products');
         const usersCollection = database.collection('users');
+        const bookingsCollection = database.collection('bookings')
 
         app.get('/categories', async (req, res) => {
             const sortBy = req.query.sortBy;
@@ -63,7 +64,7 @@ async function run() {
             }
 
             // filter the categories according to region
-            if (!region || region.toLowerCase() === 'show all') {
+            if (!region || region.toLowerCase() === 'all region') {
                 categories = categories;
             }
 
@@ -80,7 +81,7 @@ async function run() {
             }
 
             // filter the categories according to type
-            if (!type || type.toLowerCase() === 'show all') {
+            if (!type || type.toLowerCase() === 'all types') {
                 categories = categories
             }
 
@@ -125,9 +126,20 @@ async function run() {
             const alreadyUser = await usersCollection.findOne({ email: user.email })
 
             let result;
-            if (!alreadyUser) result = await usersCollection.insertOne(user);
+            if (!alreadyUser) {
+                result = await usersCollection.insertOne(user);
+            }
+
+            else result = alreadyUser;
 
             res.send(result);
+        })
+
+        //get a particular product
+        app.get('/product/:id', async (req, res) => {
+            const productId = req.params.id;
+            const result = await productsCollection.findOne({ _id: new ObjectId(productId) })
+            res.send(result)
         })
 
         //add a product
@@ -177,6 +189,7 @@ async function run() {
                     image: product.image,
                     datePosted: product.datePosted,
                     isAdvertised: product.isAdvertised,
+                    productStatus: product.productStatus,
                     sellerName: product.sellerName,
                     sellerEmail: product.sellerEmail
                 }
@@ -185,6 +198,75 @@ async function run() {
             const result = await productsCollection.updateOne(filter, updatedProduct, options);
             res.send(result);
 
+        })
+
+        // get advertised products
+        app.get('/advertised', async (req, res) => {
+            const products = (await productsCollection.find({ isAdvertised: true }).toArray()).reverse();
+            res.send(products)
+        })
+
+        // add new booking
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            const result = await bookingsCollection.insertOne(booking);
+            res.send(result);
+        })
+
+        // get bookings by a particular user
+        app.get('/bookings/:buyerEmail', async (req, res) => {
+            const buyerEmail = req.params.buyerEmail;
+            const bookings = (await bookingsCollection.find({ buyerEmail: buyerEmail }).toArray()).reverse()
+            res.send(bookings);
+        })
+
+        // delete a booking 
+        app.delete('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const result = await bookingsCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+        // get all sellers or all buyers 
+        app.get('/users', async (req, res) => {
+            const userRole = req.query.role;
+            const users = await usersCollection.find({ role: userRole }).toArray()
+            res.send(users)
+        })
+
+        // edit particular user
+        app.put('/users/:email', async (req, res) => {
+
+            const user = req.body;
+
+            const email = req.params.email;
+            const filter = { email: email };
+
+            const options = { upsert: true };
+
+            const updatedUser = {
+                $set: {
+                    email: email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    displayName: user.displayName,
+                    role: user.role,
+                    isVerified: user.isVerified,
+                    wishlist: user.wishlist
+                }
+            }
+
+            const result = await usersCollection.updateOne(filter, updatedUser, options);
+            res.send(result);
+
+        })
+
+        // delete particular user
+        app.delete('/users/:email', async (req, res) => {
+            const userEmail = req.params.email;
+            const result = await usersCollection.deleteOne({ email: userEmail })
+            res.send(result)
         })
 
     } finally {
