@@ -99,15 +99,22 @@ async function run() {
             const categoryName = req.params.categoryName;
             const quantity = parseInt(req.query.quantity);
             const currentPage = parseInt(req.query.currentPage);
+            const except = req.query.except;
 
             const totalProductsArray = await productsCollection.find({ category: categoryName }).toArray();
 
-            const totalProductsCount = totalProductsArray.length;
+            // unsold products
+            const totalAvailableProducts = totalProductsArray.filter(product => !product.productStatus?.soldTo?.buyerEmail)
 
-            const products = await productsCollection.find({ category: categoryName }).sort({ _id: -1 }).skip(quantity * (currentPage - 1)).limit(quantity).toArray();
+            let products = await productsCollection.find({ category: categoryName }).sort({ _id: -1 }).skip(quantity * (currentPage - 1)).limit(quantity).toArray();
+
+            if (except === 'sold') {
+                // remove the sold products
+                products = products.filter(product => !product.productStatus?.soldTo?.buyerEmail)
+            }
 
             const productsData = {
-                count: totalProductsCount,
+                count: totalAvailableProducts.length,
                 products: products
             }
 
